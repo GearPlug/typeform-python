@@ -10,9 +10,52 @@ pip install git+git://github.com/GearPlug/typeform-python.git
 - requests
 
 
-## EndPoints
-- base: The base endpoint response contains information about the API. It is useful for testing or making sure you have access.
-- forms: The form endpoint is the main endpoint that you will be dealing with. It is the endpoint you use to create new typeforms. You have parameters to set the title, webhook URL and of course, the fields. The form endpoint will also return you a hash of URLs that you can use to distribute your typeform or delete it.
-- images: Due to existing constraints, we cannot process all images on the fly when creating typeforms containing the 'Picture Choice' question type. Therefore, we provide an endpoint for creating images for Picture Choices before creating your typeform.
-- designs: A design is what you see when you load your typeform. It contains information that is related to the styling of your typeform.
-- urls: The url endpoint creates a new URL linking to a typeform.
+## Usage
+```
+from typeform.client import Client
+
+client = Client('API_KEY')
+```
+
+Get form ID
+```
+client.get_form_uid('URL_FORM')
+```
+
+Get form information
+```
+client.get_form_information('UID, URL')
+```
+
+Get form stats
+```
+client.get_form_stats('UID, URL')
+```
+
+Get form questions
+```
+client.get_form_questions('UID, URL')
+```
+
+Get form metadata
+```
+client.get_form_metadata('UID, URL')
+```
+
+## TODO
+- create_form
+- Update_form
+- delete_form
+- get_custom_form_messages
+- update_custom_messages
+- create_image
+- get_images_collection
+- get_image
+- delete_image
+- get_image_by_size
+- get_background_by_size
+- get_choice_image_by_size
+- create_theme
+- get_themes
+- update_themes
+- delete_themes
