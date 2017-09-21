@@ -83,3 +83,17 @@ class Client(object):
         """
         form_information = self.get_form_information(uid=uid, url=url)
         return form_information['responses']
+
+    def get_form_answers(self, uid=None, url=None):
+        """Returns answers of form.
+        Args:
+            uid:
+            url:
+        Returns:
+            A list.
+        """
+        form_information = self.get_form_information(uid=uid, url=url)
+        list_answers = []
+        for answers in form_information['responses']:
+            list_answers.append(answers['answers'])
+        return list_answers
