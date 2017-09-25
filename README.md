@@ -42,6 +42,11 @@ Get form metadata
 client.get_form_metadata('UID, URL')
 ```
 
+Get form answers
+```
+client.get_form_answers('UID, URL')
+```
+
 ## TODO
 - create_form
 - Update_form
