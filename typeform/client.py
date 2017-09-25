@@ -12,6 +12,9 @@ class Client(object):
     def _get(self, endpoint, params=None):
         return self._request('GET', endpoint, params)
 
+    def _put(self, endpoint, params=None):
+        return self._request('PUT', endpoint, params)
+
     def _request(self, method, endpoint, params=None, data=None):
         url = '{0}/{1}/{2}'.format(self.BASE_URL, self.version, endpoint)
         response = requests.request(method, url, params=params, json=data)
