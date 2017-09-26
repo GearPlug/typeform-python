@@ -12,11 +12,9 @@ class Client(object):
     def _get(self, endpoint, params=None):
         return self._request('GET', endpoint, params)
 
-    def _put(self, endpoint, params=None):
-        return self._request('PUT', endpoint, params)
-
     def _request(self, method, endpoint, params=None, data=None):
-        url = '{0}/{1}/{2}'.format(self.BASE_URL, self.version, endpoint)
+        url = '{0}{1}/{2}'.format(self.BASE_URL, self.version, endpoint)
+        print(url)
         response = requests.request(method, url, params=params, json=data)
         r = response.json()
         if response.status_code in [403, 404]:
@@ -100,3 +98,12 @@ class Client(object):
         for answers in form_information['responses']:
             list_answers.append(answers['answers'])
         return list_answers
+
+    def get_forms(self):
+        """Returns all forms
+        Args:
+        Returns:
+            A dict.
+        """
+        params = {'key': self.api_key}
+        return self._get('forms?key={0}'.format(self.api_key), params=params)
