@@ -47,6 +47,11 @@ Get form answers
 client.get_form_answers('UID, URL')
 ```
 
+Get all forms
+```
+client.get_forms()
+```
+
 ## TODO
 - create_form
 - Update_form
