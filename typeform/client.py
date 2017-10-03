@@ -52,7 +52,7 @@ class Client(object):
         params = {'key': self.api_key}
         return self._get('form/{}'.format(uid), params=params)
 
-    def get_form_stats(self, uid=None, url=None):
+    def get_form_stats(self, uid=None, url=None, form=None):
         """Returns stats of form.
         Args:
             uid:
@@ -60,10 +60,11 @@ class Client(object):
         Returns:
             A dict.
         """
-        form_information = self.get_form_information(uid=uid, url=url)
-        return form_information['stats']
+        if form is not None:
+            return form['stats']
+        return self.get_form_information(uid=uid, url=url)['stats']
 
-    def get_form_questions(self, uid=None, url=None):
+    def get_form_questions(self, uid=None, url=None, form=None):
         """Returns questions of form.
         Args:
             uid:
@@ -71,10 +72,11 @@ class Client(object):
         Returns:
             A dict.
         """
-        form_information = self.get_form_information(uid=uid, url=url)
-        return form_information['questions']
+        if form is not None:
+            return form['questions']
+        return self.get_form_information(uid=uid, url=url)['questions']
 
-    def get_form_metadata(self, uid=None, url=None):
+    def get_form_metadata(self, uid=None, url=None, form=None):
         """Returns metadata of form.
         Args:
             uid:
@@ -82,10 +84,11 @@ class Client(object):
         Returns:
             A dict.
         """
-        form_information = self.get_form_information(uid=uid, url=url)
-        return form_information['responses']
+        if form is not None:
+            return form['responses']
+        return self.get_form_information(uid=uid, url=url)['responses']
 
-    def get_form_answers(self, uid=None, url=None):
+    def get_form_answers(self, uid=None, url=None, form=None):
         """Returns answers of form.
         Args:
             uid:
@@ -93,11 +96,9 @@ class Client(object):
         Returns:
             A list.
         """
-        form_information = self.get_form_information(uid=uid, url=url)
-        list_answers = []
-        for answers in form_information['responses']:
-            list_answers.append(answers['answers'])
-        return list_answers
+        if form is None:
+            form = self.get_form_information(uid=uid, url=url)
+        return [answers['answers'] for answers in form['responses']]
 
     def get_forms(self):
         """Returns all forms
