@@ -11,10 +11,20 @@ pip install git+git://github.com/GearPlug/typeform-python.git
 
 
 ## Usage
+### Simple access with API KEY
 ```
 from typeform.client import Client
 
 client = Client('API_KEY')
+```
+### Authorized Access
+```
+from typeform.client import Client
+client = Client('TOKEN')
+
+To get the TOKEN follow the documentation
+ 
+https://developer.typeform.com/get-started/scopes/
 ```
 
 Get form ID
@@ -42,14 +52,23 @@ Get form metadata
 client.get_form_metadata('UID, URL')
 ```
 
-Get form answers
-```
-client.get_form_answers('UID, URL')
-```
-
 Get all forms
 ```
 client.get_forms()
+```
+
+Create Webhook
+```
+client.create_webhook(url_webhook, tag_webhook, uid)
+```
+Delete Webhook
+```
+client.create_webhook(tag_webhook, uid)
+```
+
+View Webhook
+```
+client.create_webhook(tag_webhook, uid)
 ```
 
 ## TODO
