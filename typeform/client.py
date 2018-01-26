@@ -22,8 +22,8 @@ class Client(object):
         else:
             raise exception.CredentialRequired("You must provide either access_token or api_key")
 
-    def _get(self, endpoint, data=None):
-        return self._request('GET', endpoint, data=data)
+    def _get(self, endpoint, data=None, params=None):
+        return self._request('GET', endpoint, data=data, params=params)
 
     def _put(self, endpoint, data=None):
         return self._request('PUT', endpoint, data=data)
@@ -31,9 +31,11 @@ class Client(object):
     def _delete(self, endpoint, data=None):
         return self._request('DELETE', endpoint, data=data)
 
-    def _request(self, method, endpoint, data=None):
+    def _request(self, method, endpoint, data=None, params=None):
         url = '{0}/{1}'.format(self.base_url, endpoint)
-        response = requests.request(method, url, auth=self.auth, data=json.dumps(data))
+        if data:
+            data = json.dumps(data)
+        response = requests.request(method, url, auth=self.auth, data=data, params=params)
         return self._parse(response)
 
     def _parse(self, response):
@@ -107,12 +109,10 @@ class Client(object):
             return form['fields']
         return self.get_form_information(uid=uid, url=url)['fields']
 
-    def get_form_metadata(self, since, until, uid=None, url=None, form=None):
+    def get_form_metadata(self, uid,  since, until):
         """Returns metadata of form (include answers).
         Args:
             uid: String, ID from the form
-            url: String, Url from the form (the method needs the uid or form)
-            form: String, A form
             since: String,  The since parameter is a string that uses ISO 8601 format,
             Coordinated Universal Time (UTC), with "T" as a delimiter between the date and time.
             July 10, 2017 at 12:00 a.m. UTC is expressed as 2017-07-10T00:00:00.
@@ -126,13 +126,11 @@ class Client(object):
         Returns:
             A dict.
         """
-        if form is not None:
-            return form['responses']
         data = {
             'since': since,
             'until': until,
         }
-        return self._get(endpoint="forms/{0}/responses".format(uid), data=data).json()['items']
+        return self._get(endpoint="forms/{0}/responses".format(uid), params=data).json()['items']
 
 
     def get_forms(self):
