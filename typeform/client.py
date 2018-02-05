@@ -42,9 +42,14 @@ class Client(object):
         if not response.ok:
             try:
                 data = response.json()
-                if 'description' in data and 'code' in data:
+                if 'description' in data:
                     message = data['description']
+                else:
+                    message = data
+                if 'code' in data:
                     code = data['code']
+                else:
+                    code = "There was no code in the response."
             except:
                 code = response.status_code
                 message = ""
