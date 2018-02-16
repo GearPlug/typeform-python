@@ -3,7 +3,7 @@ TypeForm API wrapper written in python.
 
 ## Installing
 ```
-pip install git+git://github.com/GearPlug/typeform-python.git
+pip install typeform-python
 ```
 
 ## Requirements
