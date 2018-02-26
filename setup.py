@@ -7,7 +7,7 @@ def read(fname):
 
 
 setup(name='typeform-python',
-      version='0.1',
+      version='0.1.1',
       description='API wrapper for Typeform written in Python',
       long_description=read('README.md'),
       url='https://github.com/GearPlug/typeform-python',
