@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class ErrorEnum(Enum):
     Forbidden = 403
     Not_Found = 404

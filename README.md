@@ -6,50 +6,46 @@ TypeForm API wrapper written in python.
 pip install typeform-python
 ```
 
-## Requirements
-- requests
-
-
 ## Usage
-### Simple access with API KEY
 ```
 from typeform.client import Client
 
-client = Client('API_KEY')
+client = Client('CLIENT_KEY', 'CLIENT_SECRET')
 ```
-### Authorized Access
-```
-from typeform.client import Client
-client = Client('TOKEN')
 
-To get the TOKEN follow the documentation
- 
-https://developer.typeform.com/get-started/scopes/
+Get authorization url
+```
+url = client.authorization_url('REDIRECT_URI', ['forms:write', 'forms:read'])
+```
+
+Exchange the code for a token
+```
+token = client.exchange_code('REDIRECT_URI', 'CODE')
+```
+
+Set the token
+```
+client.set_access_token('TOKEN')
 ```
 
 Get form ID
 ```
-client.get_form_uid('URL_FORM')
+client.get_form_uid('FORM_URL')
 ```
 
 Get form information
 ```
-client.get_form_information('UID, URL')
-```
-
-Get form stats
-```
-client.get_form_stats('UID, URL')
+client.get_form_information('FORM_UID')
 ```
 
 Get form questions
 ```
-client.get_form_questions('UID, URL')
+client.get_form_questions('FORM_UID')
 ```
 
 Get form metadata
 ```
-client.get_form_metadata('UID, URL')
+client.get_form_metadata('FORM_UID', 'SINCE', 'UNTIL')
 ```
 
 Get all forms
@@ -59,17 +55,21 @@ client.get_forms()
 
 Create Webhook
 ```
-client.create_webhook(url_webhook, tag_webhook, uid)
-```
-Delete Webhook
-```
-client.create_webhook(tag_webhook, uid)
+client.create_webhook('WEBHOOK_URL', 'WEBHOOK_TAG', 'FORM_UID')
 ```
 
 View Webhook
 ```
-client.create_webhook(tag_webhook, uid)
+client.view_webhook('WEBHOOK_TAG', 'FORM_UID')
 ```
+
+Delete Webhook
+```
+client.delete_webhook('WEBHOOK_TAG', 'FORM_UID')
+```
+
+## Requirements
+- requests
 
 ## TODO
 - create_form

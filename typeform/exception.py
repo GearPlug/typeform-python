@@ -1,32 +1,42 @@
 class BaseError(Exception):
     pass
 
+
 class CredentialRequired(BaseError):
     pass
+
 
 class UnexpectedError(BaseError):
     pass
 
-class Forbidden (BaseError):
+
+class Forbidden(BaseError):
     pass
 
-class Not_Found (BaseError):
+
+class NotFound(BaseError):
     pass
 
-class Payment_Required (BaseError):
+
+class PaymentRequired(BaseError):
     pass
 
-class Internal_Server_Error (BaseError):
+
+class InternalServerError(BaseError):
     pass
 
-class Service_Unavailable (BaseError):
+
+class ServiceUnavailable(BaseError):
     pass
 
-class Bad_Request (BaseError):
+
+class BadRequest(BaseError):
     pass
 
-class Unauthorized (BaseError):
+
+class Unauthorized(BaseError):
     pass
+
 
 class TokenRequired(BaseError):
     pass

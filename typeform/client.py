@@ -1,182 +1,217 @@
+from urllib.parse import urlencode
+
 import requests
-from requests.auth import AuthBase
+
 from typeform import exception
 from typeform.enumerator import ErrorEnum
-from typeform.clientauth import ClientAuth
-import json
+
 
 class Client(object):
-    _VALID_VERSIONS = ['v1']
+    BASE_URL = 'https://api.typeform.com/'
 
-    def __init__(self, api_key=None, access_token=None, version=None):
-        self.access_token = access_token
-        self.api_key = api_key
-        if version not in self._VALID_VERSIONS:
-            self.version = self._VALID_VERSIONS[0]
-        if api_key:
-            self.auth = ClientAuth(api_key=api_key)
-            self.base_url = 'https://api.typeform.com/'+self._VALID_VERSIONS[0]
-        elif access_token:
-            self.auth = ClientAuth(access_token=access_token)
-            self.base_url = 'https://api.typeform.com'
-        else:
-            raise exception.CredentialRequired("You must provide either access_token or api_key")
+    def __init__(self, client_id, client_secret):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.access_token = None
 
-    def _get(self, endpoint, data=None, params=None):
-        return self._request('GET', endpoint, data=data, params=params)
+    def authorization_url(self, redirect_uri, scope):
+        params = {
+            'client_id': self.client_id,
+            'redirect_uri': redirect_uri,
+            'scope': ' '.join(scope)
+        }
+        return 'https://api.typeform.com/oauth/authorize?' + urlencode(params)
 
-    def _put(self, endpoint, data=None):
-        return self._request('PUT', endpoint, data=data)
+    def exchange_code(self, redirect_uri, code):
+        data = {
+            'client_id': self.client_id,
+            'client_secret': self.client_secret,
+            'code': code,
+            'redirect_uri': redirect_uri
+        }
+        return self._post('oauth/token', data=data)
 
-    def _delete(self, endpoint, data=None):
-        return self._request('DELETE', endpoint, data=data)
+    def set_access_token(self, token):
+        self.access_token = token
 
-    def _request(self, method, endpoint, data=None, params=None):
-        url = '{0}/{1}'.format(self.base_url, endpoint)
-        if data:
-            data = json.dumps(data)
-        response = requests.request(method, url, auth=self.auth, data=data, params=params)
-        return self._parse(response)
+    @staticmethod
+    def get_form_uid(form_url):
+        """
+        Returns addresses registered by the user.
 
-    def _parse(self, response):
-        if not response.ok:
-            try:
-                data = response.json()
-                if 'description' in data:
-                    message = data['description']
-                else:
-                    message = data
-                if 'code' in data:
-                    code = data['code']
-                else:
-                    code = "There was no code in the response."
-            except:
-                code = response.status_code
-                message = ""
-            try:
-                error_enum = ErrorEnum(response.status_code)
-            except Exception:
-                raise exception.UnexpectedError('Error:{0}{1}.Message{2}'.format(code, response.status_code, message))
-            if error_enum == ErrorEnum.Forbidden:
-                raise exception.Forbidden(message)
-            if error_enum == ErrorEnum.Not_Found:
-                raise exception.Not_Found(message)
-            if error_enum == ErrorEnum.Payment_Required:
-                raise exception.Payment_Required(message)
-            if error_enum == ErrorEnum.Internal_Server_Error:
-                raise exception.Internal_Server_Error(message)
-            if error_enum == ErrorEnum.Service_Unavailable:
-                raise exception.Service_Unavailable(message)
-            if error_enum == ErrorEnum.Bad_Request:
-                raise exception.Bad_Request(message)
-            if error_enum == ErrorEnum.Unauthorized:
-                raise exception.Unauthorized(message)
-            else:
-                raise exception.BaseError('Error: {0}{1}. Message {2}'.format(code, response.status_code, message))
-            return data
-        else:
-            return response
-
-    def get_form_uid(self, url_form):
-        """Returns addresses registered by the user.
         Args:
-            url_form: String, Url from the form (the method needs the uid or form)
+            form_url: String, Url from the form (the method needs the uid or form).
+
         Returns:
             A string.
-        """
-        list_url = url_form.split("/to/")
-        typeform_uid = list_url[1]
-        return typeform_uid
 
-    def get_form_information(self, uid=None, url=None):
-        """Returns addresses registered by the user.
+        """
+        return form_url.split('/to/')[-1]
+
+    def get_form_information(self, form_uid=None, form_url=None):
+        """
+        Returns addresses registered by the user.
+
         Args:
-            uid: Unique ID for the form
+            form_uid: Unique ID for the form.
+            form_url: String, Url from the form (the method needs the uid or form).
+
         Returns:
             A dict.
-        """
-        if uid is None:
-            if url is None:
-                raise Exception('You must provide either an UID or Form URL.')
-            else:
-                uid = self.get_form_uid(url)
-        return self._get('forms/{}'.format(uid)).json()
 
-    def get_form_questions(self, uid=None, url=None, form=None):
-        """Returns questions of form.
+        """
+        if form_url:
+            form_uid = self.get_form_uid(form_url)
+        if not form_uid:
+            raise Exception('You must provide either a Form UID or Form URL.')
+        return self._get('forms/{}'.format(form_uid))
+
+    def get_form_questions(self, form_uid=None, form_url=None, form=None):
+        """
+        Returns questions of form.
+
         Args:
-            uid: Unique ID for the form
-            url: String, Url from the form (the method needs the uid or form)
+            form_uid: Unique ID for the form.
+            form_url: String, Url from the form (the method needs the uid or form).
+            form:
+
         Returns:
             A dict.
+
         """
-        if form is not None:
+        if form:
             return form['fields']
-        return self.get_form_information(uid=uid, url=url)['fields']
+        response = self.get_form_information(form_uid=form_uid, form_url=form_url)
+        return response['fields']
 
-    def get_form_metadata(self, uid,  since, until):
-        """Returns metadata of form (include answers).
+    def get_form_metadata(self, form_uid, since, until):
+        """
+        Returns metadata of form (include answers).
+
         Args:
-            uid: String, ID from the form
+            form_uid: String, ID from the form.
+
             since: String,  The since parameter is a string that uses ISO 8601 format,
             Coordinated Universal Time (UTC), with "T" as a delimiter between the date and time.
             July 10, 2017 at 12:00 a.m. UTC is expressed as 2017-07-10T00:00:00.
             If you want to retrieve responses for yesterday, 2017-07-09, the value for your since query parameter
-            would be 2017-07-09T00:00:00
+            would be 2017-07-09T00:00:00.
+
             until: String, The until parameter is a string that uses ISO 8601 format,
             Coordinated Universal Time (UTC), with "T" as a delimiter between the date and time.
             July 10, 2017 at 12:00 a.m. UTC is expressed as 2017-07-10T00:00:00.
             If you want to retrieve responses for yesterday, 2017-07-09, the value for your since query parameter
-            would be 2017-07-09T00:00:00
+            would be 2017-07-09T00:00:00.
+
         Returns:
             A dict.
+
         """
-        data = {
+        params = {
             'since': since,
             'until': until,
         }
-        return self._get(endpoint="forms/{0}/responses".format(uid), params=data).json()['items']
-
+        response = self._get("forms/{}/responses".format(form_uid), params=params)
+        return response['items']
 
     def get_forms(self):
-        """Returns all forms
-        Args:
+        """
+        Returns all forms.
+
         Returns:
             A dict.
-        """
-        return self._get(endpoint='forms').json()
 
-    def create_webhook(self, url_webhook, tag_webhook, uid):
         """
-        :param url_webhook: String URL webhook request
-        :param tag_webhook: String
-        :param uid: String, Unique ID for the form
-        :return: dict
-        """
-        if self.access_token is not None:
-            data = {'url':url_webhook, 'enabled':True}
-            return self._put(endpoint='forms/{1}/webhooks/{0}'.format(tag_webhook, uid), data=data).json()
-        else:
-            raise exception.TokenRequired("You need an access token for this method")
+        return self._get('forms')
 
-    def view_webhook(self, tag_webhook, uid):
+    def create_webhook(self, webhook_url, form_uid, webhook_tag):
         """
-        :param tag_webhook: String
-        :param uid: String, Unique ID for the form
-        :return:
-        """
-        if self.access_token is not None:
-            return self._get(endpoint='forms/{1}/webhooks/{0}'.format(tag_webhook, uid)).json()
-        else:
-            raise exception.TokenRequired("You need an access token for this method")
 
-    def delete_webhook(self, tag_webhook, uid):
+        Args:
+            webhook_url: String URL webhook request.
+            form_uid: String, Unique ID for the form.
+            webhook_tag: String.
+
+        Returns:
+            A dict.
+
         """
-        :param tag_webhook: String
-        :param uid: String, Unique ID for the form
-        :return:
+        data = {
+            'url': webhook_url,
+            'enabled': True
+        }
+        return self._put('forms/{}/webhooks/{}'.format(form_uid, webhook_tag), json=data)
+
+    def view_webhook(self, form_uid, webhook_tag):
         """
-        if self.access_token is not None:
-            return self._delete(endpoint='forms/{1}/webhooks/{0}'.format(tag_webhook, uid)).ok
+
+        Args:
+            form_uid: String, Unique ID for the form.
+            webhook_tag: String.
+
+        Returns:
+
+        """
+        return self._get('forms/{}/webhooks/{}'.format(form_uid, webhook_tag))
+
+    def delete_webhook(self, form_uid, webhook_tag):
+        """
+
+        Args:
+            form_uid: String, Unique ID for the form.
+            webhook_tag: String.
+
+        Returns:
+
+        """
+        return self._delete('forms/{}/webhooks/{}'.format(form_uid, webhook_tag))
+
+    def _get(self, endpoint, **kwargs):
+        return self._request('GET', endpoint, **kwargs)
+
+    def _post(self, endpoint, **kwargs):
+        return self._request('POST', endpoint, **kwargs)
+
+    def _put(self, endpoint, **kwargs):
+        return self._request('PUT', endpoint, **kwargs)
+
+    def _delete(self, endpoint, **kwargs):
+        return self._request('DELETE', endpoint, **kwargs)
+
+    def _request(self, method, endpoint, **kwargs):
+        headers = {'Authorization': 'Bearer {}'.format(self.access_token)}
+        response = requests.request(method, self.BASE_URL + endpoint, headers=headers, **kwargs)
+        return self._parse(response)
+
+    def _parse(self, response):
+        if 'Content-Type' in response.headers and 'application/json' in response.headers['Content-Type']:
+            r = response.json()
         else:
-            raise exception.TokenRequired("You need an access token for this method")
+            try:
+                r = response.json()
+            except Exception:
+                r = response.text
+
+        if isinstance(r, dict) and 'code' in r and 'description' in r:
+            message = r['description']
+            code = r['code']
+            try:
+                error_enum = ErrorEnum(response.status_code)
+            except Exception:
+                raise exception.UnexpectedError('Error: {}. Message {}'.format(code, message))
+            if error_enum == ErrorEnum.Forbidden:
+                raise exception.Forbidden(message)
+            if error_enum == ErrorEnum.Not_Found:
+                raise exception.NotFound(message)
+            if error_enum == ErrorEnum.Payment_Required:
+                raise exception.PaymentRequired(message)
+            if error_enum == ErrorEnum.Internal_Server_Error:
+                raise exception.InternalServerError(message)
+            if error_enum == ErrorEnum.Service_Unavailable:
+                raise exception.ServiceUnavailable(message)
+            if error_enum == ErrorEnum.Bad_Request:
+                raise exception.BadRequest(message)
+            if error_enum == ErrorEnum.Unauthorized:
+                raise exception.Unauthorized(message)
+
+        return r
